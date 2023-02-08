@@ -337,5 +337,23 @@ Let's practice running regression models with smooth functions on X. We need the
 - fit both a linear model and a spline model (use `gam()` with a cubic regression spline on wind speed). Summarize and plot the results from the models and interpret which model is the best fit and why.
 
 ```{r}
+met_med_station_lz <- met_lz %>% 
+  group_by(USAFID) %>% 
+  summarise(
+    across(c(temp, wind.sp), function(x) quantile(x, probs=0.5, na.rm=TRUE))
+  ) %>% as.data.frame()
+  
+met_med_station_lz %>% ggplot(mapping=aes(y=wind.sp, x=temp)) + geom_point() + stat_smooth(method="lm", formula=y~x, se=FALSE, col="red") + geom_smooth(col="blue")
 
+plot(temp~wind.sp, data=met_med_station_lz)
+lmod <- lm(temp ~ wind.sp, data=met_med_station_lz)
+plot(lmod)
+summary(lmod) 
 ```
+
+```{r}
+gmod <- gam(temp ~s(wind.sp, k=6, fx=TRUE, bs="cr"), data=met_med_station_lz)
+plot(gmod)
+summary(gmod)
+```
+Both models generate a p-value less than 0.05. The spline has a p-value of < 2e-16, and the linear model has a p-value of 3.941e-9. Thus, with a smaller p-value, the spline is a better model fit for the data. 
