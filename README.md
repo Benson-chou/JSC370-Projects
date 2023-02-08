@@ -356,6 +356,31 @@ of looking at one variable at a time, look at the euclidean distance. If
 multiple stations show in the median, select the one located at the
 lowest latitude.
 
+``` r
+# Find medians of temp, wind.sp, atm.press
+met_med_s_lz <- met_lz %>% 
+   group_by(STATE) %>% 
+  summarise(
+    across(
+      c(temp, wind.sp, atm.press), 
+      function(x) quantile(x, prob = .5,  na.rm=TRUE)
+    )
+  )
+
+merged <- met_lz %>% left_join(met_med_s_lz, by="STATE") %>% as.data.frame()
+```
+
+``` r
+euclidean_stat <- merged %>%  
+  mutate(distance = ((temp.x - merged$temp.y)^2 + 
+                       (wind.sp.x - merged$wind.sp.y) ^2) + 
+                    (atm.press.x - merged$temp.y) ^ 2^(1/2))
+
+result <- euclidean_stat %>% 
+  group_by(STATE) %>% 
+  slice(which.min(distance))
+```
+
 Knit the doc and save it on GitHub.
 
 ## Question 3: In the middle?
