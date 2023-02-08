@@ -1,9 +1,9 @@
 ---
 title: "Lab 05 - Data Wrangling"
 output: 
-  github_document: default
   tufte::tufte_html:
     css: style.css
+  github_document: default
 link-citations: yes
 ---
 
@@ -245,8 +245,35 @@ Knit the doc and save it on GitHub.
 For each state, identify what is the station that is closest to the mid-point of the state. Combining these with the stations you identified in the previous question, use `leaflet()` to visualize all ~100 points in the same figure, applying different colors for those identified in this question.
 
 ```{r}
+# Find medians of temp, wind.sp, atm.press
+met_mean_3_lz <- met_lz %>% 
+   group_by(STATE) %>% 
+  summarise(
+    across(
+      c(lat, lon), 
+      function(x) mean(x, na.rm=TRUE)
+    )
+  )
 
+merged <- met_lz %>% left_join(met_mean_3_lz, by="STATE") %>% as.data.frame()
 ```
+```{r}
+euclidean_dist_lon <- merged %>% 
+  mutate(distance = sqrt((lat.x - merged$lat.y) ^ 2 + 
+                           (lon.x - merged$lon.y)^2))
+result_lon <- euclidean_dist_lon %>% 
+  group_by(STATE) %>% 
+  slice(which.min(distance))
+```
+```{r}
+library(leaflet)
+
+leaflet(result) %>% 
+  addProviderTiles('OpenStreetMap') %>% 
+  addCircleMarkers(lng = ~lon, lat = ~lat, fillColor = "Red", weight = 0) %>% 
+  addCircleMarkers(lng = ~result_lon$lon.x, lat = ~result_lon$lat.x, fillColor = "Blue", weight =0)
+```
+
 
 Knit the doc and save it on GitHub.
 
